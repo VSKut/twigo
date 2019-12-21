@@ -1,0 +1,90 @@
+version: '3'
+services:
+  server:
+    build:
+      context: ..
+      dockerfile: build/deploy/Dockerfile.server
+    image: twigo/grpc_server
+    container_name: grpc_server
+    environment:
+      - DB_DRIVER=${DB_DRIVER}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_SSL_MODE=${DB_SSL_MODE}
+      - GATEWAY_HOST=${GATEWAY_HOST}
+      - GATEWAY_PORT=${GATEWAY_PORT}
+      - SERVER_HOST=${SERVER_HOST}
+      - SERVER_PORT=${SERVER_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: on-failure
+    depends_on:
+      - db
+    networks:
+      - net
+#    ports:
+#      - "${SERVER_PORT}:${SERVER_PORT}"
+
+  client:
+    build:
+      context: ..
+      dockerfile: build/deploy/Dockerfile.client
+    container_name: rest_client
+    image: twigo/rest_client
+    environment:
+      - GATEWAY_HOST=${GATEWAY_HOST}
+      - GATEWAY_PORT=${GATEWAY_PORT}
+      - SERVER_HOST=${SERVER_HOST}
+      - SERVER_PORT=${SERVER_PORT}
+    ports:
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+    restart: on-failure
+    depends_on:
+      - server
+    networks:
+      - net
+
+  migrate:
+    image: migrate/migrate
+    container_name: migration_runner
+    networks:
+      - net
+    volumes:
+      - ../db/migrations:/migrations
+    command: ["-path", "migrations", "-database",  "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME}?sslmode=${DB_SSL_MODE}", "up"]
+    depends_on:
+      - client
+
+  swagger:
+    image: swaggerapi/swagger-ui
+    container_name: swagger
+    ports:
+      - "8082:8080"
+    environment:
+      - SWAGGER_JSON=/app/api.json
+    volumes:
+      - ../api/swagger-spec/api.json:/app/api.json
+    restart: always
+
+  db:
+    image: postgres:latest
+    container_name: db_postgres
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - DATABASE_HOST=${DB_HOST}
+    volumes:
+      - database_postgres:/var/lib/postgresql/data
+    networks:
+      - net
+#    ports:
+#      - "5432:5432"
+
+volumes:
+  database_postgres:
+
+networks:
+  net:
+    driver: bridge

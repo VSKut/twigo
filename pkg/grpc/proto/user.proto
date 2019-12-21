@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package user;
+
+import "validate/validate.proto";
+import "google/api/annotations.proto";
+
+option go_package = "pkg/grpc";
+
+service UserService {
+    rpc Subscribe(SubscribeRequest) returns (SubscribeResponse) {
+        option (google.api.http) = {
+    		post: "/subscribe"
+    		body: "*"
+	    };
+    }
+}
+
+message SubscribeRequest {
+    string username = 3 [(validate.rules).string = {min_len: 5, max_len: 64}];
+}
+
+message SubscribeResponse {}

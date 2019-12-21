@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package tweet;
+
+import "validate/validate.proto";
+import "google/api/annotations.proto";
+
+option go_package = "pkg/grpc";
+
+service TweetService {
+    rpc CreateTweet(CreateTweetRequest) returns (CreateTweetResponse) {
+        option (google.api.http) = {
+    		post: "/tweets"
+    		body: "*"
+	    };
+    }
+    rpc ListTweet(ListTweetRequest) returns (ListTweetResponse) {
+        option (google.api.http) = {
+    		get: "/tweets"
+	    };
+    }
+}
+
+message CreateTweetRequest {
+    string message = 1 [(validate.rules).string = {min_len: 1, max_len: 280}];
+}
+
+message CreateTweetResponse {
+    uint64 id = 1;
+    string message = 2;
+}
+
+
+message ListTweetRequest {}
+
+message ListTweetResponse {
+    message Tweet {
+        uint64 id = 1;
+        string message = 2;
+    }
+
+    repeated Tweet tweets = 1;
+}

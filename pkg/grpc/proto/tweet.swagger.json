@@ -1,0 +1,100 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "pkg/grpc/proto/tweet.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/tweets": {
+      "get": {
+        "operationId": "ListTweet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tweetListTweetResponse"
+            }
+          }
+        },
+        "tags": [
+          "TweetService"
+        ]
+      },
+      "post": {
+        "operationId": "CreateTweet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tweetCreateTweetResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tweetCreateTweetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TweetService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ListTweetResponseTweet": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tweetCreateTweetRequest": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tweetCreateTweetResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tweetListTweetResponse": {
+      "type": "object",
+      "properties": {
+        "tweets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ListTweetResponseTweet"
+          }
+        }
+      }
+    }
+  }
+}
