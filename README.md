@@ -1,6 +1,7 @@
 ![Go version](https://img.shields.io/github/go-mod/go-version/vskut/twigo)
 [![Build Status](https://travis-ci.org/vskut/twigo.svg)](https://travis-ci.org/vskut/twigo)
 [![Go Report Card](https://goreportcard.com/badge/github.com/vskut/twigo)](https://goreportcard.com/report/github.com/vskut/twigo)
+[![GolangCI Report card](https://golangci.com/badges/github.com/vskut/twigo.svg)](https://golangci.com/r/github.com/VSKut/twigo)
 [![codecov.io](https://codecov.io/github/vskut/twigo/branch/master/graph/badge.svg)](https://codecov.io/github/vskut/twigo)
 ![Swagger](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2FVSKut%2Ftwigo%2Fmaster%2Fapi%2Fswagger-spec%2Fapi.json)
 ![License](https://img.shields.io/github/license/vskut/twigo)
