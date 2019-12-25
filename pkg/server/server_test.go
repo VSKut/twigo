@@ -50,14 +50,14 @@ func Test_AuthFuncOverride(t *testing.T) {
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
 		)
-		ctx, err := srv.AuthFuncOverride(ctx, "/tweet.TweetService/ListTweet")
+		_, err := srv.AuthFuncOverride(ctx, "/tweet.TweetService/ListTweet")
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("no need token", func(t *testing.T) {
 		ctx := context.Background()
-		ctx, err := srv.AuthFuncOverride(ctx, "/auth.AuthService/Login")
+		_, err := srv.AuthFuncOverride(ctx, "/auth.AuthService/Login")
 
 		assert.NoError(t, err)
 	})
