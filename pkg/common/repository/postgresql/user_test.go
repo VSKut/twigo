@@ -59,6 +59,28 @@ func Test_UsersSave(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("duplicate username", func(t *testing.T) {
+		mock.ExpectQuery("^INSERT INTO users\\((.+)\\)").
+			WillReturnError(fmt.Errorf("duplicate key value violates unique constraint \"users_username_idx\"")).
+			WithArgs(user.Username, user.Email, user.Password)
+
+		user, err := repo.Save(user)
+
+		assert.Empty(t, user.ID)
+		assert.Error(t, err)
+	})
+
+	t.Run("duplicate email", func(t *testing.T) {
+		mock.ExpectQuery("^INSERT INTO users\\((.+)\\)").
+			WillReturnError(fmt.Errorf("duplicate key value violates unique constraint \"users_email_idx\"")).
+			WithArgs(user.Username, user.Email, user.Password)
+
+		user, err := repo.Save(user)
+
+		assert.Empty(t, user.ID)
+		assert.Error(t, err)
+	})
+
 }
 
 func Test_UsersGetBy(t *testing.T) {
@@ -98,6 +120,15 @@ func Test_UsersGetBy(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("user with email doesn't exists", func(t *testing.T) {
+		mock.ExpectQuery("^SELECT (.+) FROM users").
+			WillReturnError(sql.ErrNoRows)
+		user, err := repo.GetByEmail(user.Email)
+
+		assert.Empty(t, user.ID)
+		assert.Error(t, err)
+	})
+
 	t.Run("username valid", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "username", "email", "password"}).
 			AddRow(1, user.Username, user.Email, user.Password)
@@ -107,6 +138,16 @@ func Test_UsersGetBy(t *testing.T) {
 
 		assert.NotEmpty(t, user.ID)
 		assert.NoError(t, err)
+	})
+
+	t.Run("user with username doesn't exists", func(t *testing.T) {
+		mock.ExpectQuery("^SELECT (.+) FROM users").
+			WillReturnError(sql.ErrNoRows).
+			WithArgs(user.Email)
+		user, err := repo.GetByUsername(user.Email)
+
+		assert.Empty(t, user.ID)
+		assert.Error(t, err)
 	})
 
 	t.Run("username invalid", func(t *testing.T) {

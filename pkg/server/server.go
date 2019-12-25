@@ -4,6 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"net"
 
 	"golang.org/x/crypto/bcrypt"
@@ -30,6 +34,16 @@ func NewServer(db *sql.DB) *Server {
 	}
 }
 
+// AuthFuncOverride allows a given gRPC service implementation to override the global `JwtMiddleware`.
+func (s *Server) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
+	switch fullMethodName {
+	case "/tweet.TweetService/ListTweet", "/tweet.TweetService/CreateTweet", "/user.UserService/Subscribe":
+		return token.JwtMiddleware(ctx)
+	default:
+		return ctx, nil
+	}
+}
+
 // Run starts the grpc server
 func (s *Server) Run(addr string) error {
 	tcp, err := net.Listen("tcp", addr)
@@ -37,7 +51,11 @@ func (s *Server) Run(addr string) error {
 		return err
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpc_auth.UnaryServerInterceptor(token.JwtMiddleware),
+		)),
+	)
 
 	hlzpb.RegisterHealthServer(grpcServer, health.NewServer())
 
@@ -59,7 +77,6 @@ func (s *Server) Login(_ context.Context, request *proto.LoginRequest) (*proto.L
 	}
 
 	user, err := s.repo.Users.GetByEmail(request.GetEmail())
-
 	if err != nil {
 		return &proto.LoginResponse{}, errors.New("invalid LoginRequest.Email: wrong email provided")
 	}
@@ -108,9 +125,9 @@ func (s *Server) Subscribe(ctx context.Context, request *proto.SubscribeRequest)
 		return &proto.SubscribeResponse{}, err
 	}
 
-	_, authUser, err := token.CheckAuth(ctx)
-	if err != nil {
-		return &proto.SubscribeResponse{}, err
+	authUser, ok := ctx.Value("tokenInfo").(entity.User)
+	if !ok {
+		return &proto.SubscribeResponse{}, status.Error(codes.Unauthenticated, "Authentication required")
 	}
 
 	if err := s.repo.Users.Subscribe(authUser, request.GetUsername()); err != nil {
@@ -126,9 +143,9 @@ func (s *Server) CreateTweet(ctx context.Context, request *proto.CreateTweetRequ
 		return &proto.CreateTweetResponse{}, err
 	}
 
-	_, authUser, err := token.CheckAuth(ctx)
-	if err != nil {
-		return &proto.CreateTweetResponse{}, err
+	authUser, ok := ctx.Value("tokenInfo").(entity.User)
+	if !ok {
+		return &proto.CreateTweetResponse{}, status.Error(codes.Unauthenticated, "Authentication required")
 	}
 
 	tweet, err := s.repo.Tweets.Save(entity.Tweet{
@@ -144,9 +161,9 @@ func (s *Server) CreateTweet(ctx context.Context, request *proto.CreateTweetRequ
 
 // ListTweet implements logic of listing user's tweets
 func (s *Server) ListTweet(ctx context.Context, _ *proto.ListTweetRequest) (*proto.ListTweetResponse, error) {
-	_, authUser, err := token.CheckAuth(ctx)
-	if err != nil {
-		return &proto.ListTweetResponse{}, err
+	authUser, ok := ctx.Value("tokenInfo").(entity.User)
+	if !ok {
+		return &proto.ListTweetResponse{}, status.Error(codes.Unauthenticated, "Authentication required")
 	}
 
 	res, err := s.repo.Tweets.ListAllByUser(authUser)

@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"strings"
 
-	"github.com/labstack/gommon/log"
 	"github.com/vskut/twigo/pkg/common/entity"
 )
 
@@ -26,7 +26,14 @@ func (r *UsersRepositoryPostgreSQL) Save(user entity.User) (entity.User, error) 
 	query := "INSERT INTO users(username,email,password) VALUES($1,$2,$3) returning id;"
 	err := r.db.QueryRow(query, user.Username, user.Email, user.Password).Scan(&user.ID)
 	if err != nil {
-		log.Print(err)
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"users_username_idx\"") {
+			return entity.User{}, status.Errorf(codes.InvalidArgument, "invalid SaveRequest.Username: user with username %q already exists", user.Username)
+		}
+
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"users_email_idx\"") {
+			return entity.User{}, status.Errorf(codes.InvalidArgument, "invalid SaveRequest.Email: user with email %q already exists", user.Email)
+		}
+
 		return entity.User{}, status.Error(codes.InvalidArgument, "invalid SaveRequest: request error")
 	}
 
@@ -43,7 +50,6 @@ func (r *UsersRepositoryPostgreSQL) Subscribe(userSource entity.User, username s
 	querySelectUserByUsername := "SELECT id, username, email, password FROM users WHERE username = $1;"
 	err := r.db.QueryRow(querySelectUserByUsername, username).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	if err != nil || user.ID == 0 {
-		log.Print(err)
 		return status.Errorf(codes.InvalidArgument, "invalid SubscribeRequest.Username: user with username %q doesn't exists", username)
 	}
 
@@ -51,7 +57,6 @@ func (r *UsersRepositoryPostgreSQL) Subscribe(userSource entity.User, username s
 	querySelectSubscriptionsCount := "SELECT count(1) FROM user_subscriptions WHERE user_id = $1 AND destination_user_id = $2;"
 	err = r.db.QueryRow(querySelectSubscriptionsCount, userSource.ID, user.ID).Scan(&userSubscriptionExists)
 	if err != nil {
-		log.Print(err)
 		return status.Error(codes.InvalidArgument, "invalid SubscribeRequest.Username: request error")
 	}
 
@@ -62,7 +67,6 @@ func (r *UsersRepositoryPostgreSQL) Subscribe(userSource entity.User, username s
 	queryInsertSubscription := "INSERT INTO user_subscriptions(user_id,destination_user_id) VALUES($1,$2);"
 	_, err = r.db.Query(queryInsertSubscription, userSource.ID, user.ID)
 	if err != nil {
-		log.Print(err)
 		return status.Error(codes.InvalidArgument, "invalid SubscribeRequest.Username: request error")
 	}
 
@@ -75,8 +79,11 @@ func (r *UsersRepositoryPostgreSQL) GetByEmail(email string) (entity.User, error
 	query := "SELECT id, username, email, password FROM users WHERE email = $1;"
 	err := r.db.QueryRow(query, email).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	if err != nil {
-		log.Print(err)
-		return entity.User{}, status.Errorf(codes.InvalidArgument, "invalid GetByEmail.Email: user with email %q doesn't exists", email)
+		if err == sql.ErrNoRows {
+			return entity.User{}, status.Errorf(codes.InvalidArgument, "invalid GetByUsername.Email: user with email %q doesn't exists", email)
+		}
+
+		return entity.User{}, status.Error(codes.InvalidArgument, "invalid GetByUsername.Email: request error")
 	}
 
 	return user, nil
@@ -88,8 +95,11 @@ func (r *UsersRepositoryPostgreSQL) GetByUsername(username string) (entity.User,
 	query := "SELECT id, username, email, password FROM users WHERE username = $1;"
 	err := r.db.QueryRow(query, username).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	if err != nil {
-		log.Print(err)
-		return entity.User{}, status.Errorf(codes.InvalidArgument, "invalid GetByUsername.Username: user with username %q doesn't exists", username)
+		if err == sql.ErrNoRows {
+			return entity.User{}, status.Errorf(codes.InvalidArgument, "invalid GetByUsername.Username: user with username %q doesn't exists", username)
+		}
+
+		return entity.User{}, status.Error(codes.InvalidArgument, "invalid GetByUsername.Username: request error")
 	}
 
 	return user, nil

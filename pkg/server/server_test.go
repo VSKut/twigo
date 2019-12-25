@@ -28,6 +28,41 @@ func Test_Run(t *testing.T) {
 	})
 }
 
+func Test_AuthFuncOverride(t *testing.T) {
+	srv := NewServer(&sql.DB{})
+
+	t.Run("need token", func(t *testing.T) {
+		user := entity.User{
+			ID:       1,
+			Username: "username",
+			Email:    "test@test.com",
+			Password: "123456",
+		}
+
+		resultToken, errResultToken := token.CreateToken(user)
+
+		assert.NotEmpty(t, resultToken, "shouldn't be empty")
+		assert.NoError(t, errResultToken, "shouldn't be an error")
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, "tokenInfo", user)
+		ctx = metadata.NewIncomingContext(
+			ctx,
+			metadata.Pairs("authorization", "Bearer "+resultToken),
+		)
+		ctx, err := srv.AuthFuncOverride(ctx, "/tweet.TweetService/ListTweet")
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("no need token", func(t *testing.T) {
+		ctx := context.Background()
+		ctx, err := srv.AuthFuncOverride(ctx, "/auth.AuthService/Login")
+
+		assert.NoError(t, err)
+	})
+}
+
 func Test_Login(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -189,6 +224,7 @@ func Test_Subscribe(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
+		ctx = context.WithValue(ctx, "tokenInfo", user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
@@ -254,6 +290,7 @@ func Test_Subscribe(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
+		ctx = context.WithValue(ctx, "tokenInfo", user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
@@ -310,6 +347,7 @@ func Test_Create(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
+		ctx = context.WithValue(ctx, "tokenInfo", user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
@@ -356,6 +394,7 @@ func Test_Create(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
+		ctx = context.WithValue(ctx, "tokenInfo", user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
@@ -410,6 +449,7 @@ func Test_List(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
+		ctx = context.WithValue(ctx, "tokenInfo", user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
@@ -432,6 +472,7 @@ func Test_List(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
+		ctx = context.WithValue(ctx, "tokenInfo", user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),

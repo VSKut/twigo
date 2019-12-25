@@ -3,11 +3,11 @@ package token
 import (
 	"context"
 	"errors"
+	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"os"
-	"strings"
 	"time"
-
-	"google.golang.org/grpc/metadata"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/vskut/twigo/pkg/common/entity"
@@ -56,37 +56,16 @@ func ParseToken(token string) (entity.User, error) {
 	return claims.User, nil
 }
 
-// ParseHeader parses header from context.Context to string-token
-func ParseHeader(ctx context.Context) (string, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return "", errors.New("invalid request: jwt-token is not provided")
-	}
-
-	str, ok := md["authorization"]
-	if !ok {
-		return "", errors.New("invalid request: valid jwt-token required")
-	}
-
-	token := strings.Split(str[0], "Bearer ")
-	if len(token) != 2 {
-		return "", errors.New("invalid request: valid jwt-token required")
-	}
-
-	return token[1], nil
-}
-
-// CheckAuth checks authorization with jwt token
-func CheckAuth(ctx context.Context) (string, entity.User, error) {
-	jwtToken, err := ParseHeader(ctx)
+func JwtMiddleware(ctx context.Context) (context.Context, error) {
+	token, err := grpc_auth.AuthFromMD(ctx, "bearer")
 	if err != nil {
-		return "", entity.User{}, err
+		return nil, err
 	}
 
-	authUser, err := ParseToken(jwtToken)
+	tokenInfo, err := ParseToken(token)
 	if err != nil {
-		return "", entity.User{}, err
+		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
-	return jwtToken, authUser, nil
+	return context.WithValue(ctx, "tokenInfo", tokenInfo), nil
 }
