@@ -70,7 +70,7 @@ func Test_JwtMiddleware(t *testing.T) {
 		assert.NoError(t, err, "should be nil")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, "tokenInfo", user)
+		ctx = context.WithValue(ctx, ValueTokenContextKey("tokenInfo"), user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+token),

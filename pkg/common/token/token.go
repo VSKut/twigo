@@ -21,6 +21,9 @@ type JwtTokenClaim struct {
 
 var jwtSecretKey = []byte(os.Getenv("JWT_SECRET"))
 
+// ValueTokenContextKey ...
+type ValueTokenContextKey string
+
 // CreateToken creates jwt token from user entity
 func CreateToken(user entity.User) (string, error) {
 	claims := JwtTokenClaim{
@@ -56,6 +59,7 @@ func ParseToken(token string) (entity.User, error) {
 	return claims.User, nil
 }
 
+// JwtMiddleware ...
 func JwtMiddleware(ctx context.Context) (context.Context, error) {
 	token, err := grpc_auth.AuthFromMD(ctx, "bearer")
 	if err != nil {
@@ -67,5 +71,5 @@ func JwtMiddleware(ctx context.Context) (context.Context, error) {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
-	return context.WithValue(ctx, "tokenInfo", tokenInfo), nil
+	return context.WithValue(ctx, ValueTokenContextKey("tokenInfo"), tokenInfo), nil
 }
