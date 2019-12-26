@@ -125,7 +125,7 @@ func (s *Server) Subscribe(ctx context.Context, request *proto.SubscribeRequest)
 		return &proto.SubscribeResponse{}, err
 	}
 
-	authUser, ok := ctx.Value("tokenInfo").(entity.User)
+	authUser, ok := ctx.Value(token.ValueTokenContextKey).(entity.User)
 	if !ok {
 		return &proto.SubscribeResponse{}, status.Error(codes.Unauthenticated, "Authentication required")
 	}
@@ -143,7 +143,7 @@ func (s *Server) CreateTweet(ctx context.Context, request *proto.CreateTweetRequ
 		return &proto.CreateTweetResponse{}, err
 	}
 
-	authUser, ok := ctx.Value("tokenInfo").(entity.User)
+	authUser, ok := ctx.Value(token.ValueTokenContextKey).(entity.User)
 	if !ok {
 		return &proto.CreateTweetResponse{}, status.Error(codes.Unauthenticated, "Authentication required")
 	}
@@ -161,7 +161,7 @@ func (s *Server) CreateTweet(ctx context.Context, request *proto.CreateTweetRequ
 
 // ListTweet implements logic of listing user's tweets
 func (s *Server) ListTweet(ctx context.Context, _ *proto.ListTweetRequest) (*proto.ListTweetResponse, error) {
-	authUser, ok := ctx.Value("tokenInfo").(entity.User)
+	authUser, ok := ctx.Value(token.ValueTokenContextKey).(entity.User)
 	if !ok {
 		return &proto.ListTweetResponse{}, status.Error(codes.Unauthenticated, "Authentication required")
 	}

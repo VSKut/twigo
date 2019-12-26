@@ -70,7 +70,7 @@ func Test_JwtMiddleware(t *testing.T) {
 		assert.NoError(t, err, "should be nil")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, ValueTokenContextKey("tokenInfo"), user)
+		ctx = context.WithValue(ctx, ValueTokenContextKey, user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+token),
@@ -78,7 +78,7 @@ func Test_JwtMiddleware(t *testing.T) {
 
 		resultCtx, err := JwtMiddleware(ctx)
 
-		authUser, ok := resultCtx.Value("tokenInfo").(entity.User)
+		authUser, ok := resultCtx.Value(ValueTokenContextKey).(entity.User)
 
 		assert.True(t, ok)
 		assert.Equal(t, user, authUser)

@@ -45,7 +45,7 @@ func Test_AuthFuncOverride(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, token.ValueTokenContextKey("tokenInfo"), user)
+		ctx = context.WithValue(ctx, token.ValueTokenContextKey, user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
@@ -224,7 +224,7 @@ func Test_Subscribe(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, token.ValueTokenContextKey("tokenInfo"), user)
+		ctx = context.WithValue(ctx, token.ValueTokenContextKey, user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
@@ -290,7 +290,7 @@ func Test_Subscribe(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, token.ValueTokenContextKey("tokenInfo"), user)
+		ctx = context.WithValue(ctx, token.ValueTokenContextKey, user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
@@ -347,7 +347,7 @@ func Test_Create(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, token.ValueTokenContextKey("tokenInfo"), user)
+		ctx = context.WithValue(ctx, token.ValueTokenContextKey, user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
@@ -394,7 +394,7 @@ func Test_Create(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, token.ValueTokenContextKey("tokenInfo"), user)
+		ctx = context.WithValue(ctx, token.ValueTokenContextKey, user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
@@ -449,7 +449,7 @@ func Test_List(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, token.ValueTokenContextKey("tokenInfo"), user)
+		ctx = context.WithValue(ctx, token.ValueTokenContextKey, user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
@@ -472,7 +472,7 @@ func Test_List(t *testing.T) {
 		assert.NoError(t, errResultToken, "shouldn't be an error")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, token.ValueTokenContextKey("tokenInfo"), user)
+		ctx = context.WithValue(ctx, token.ValueTokenContextKey, user)
 		ctx = metadata.NewIncomingContext(
 			ctx,
 			metadata.Pairs("authorization", "Bearer "+resultToken),
